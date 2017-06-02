@@ -2,8 +2,21 @@ var RtmClient = require('@slack/client').RtmClient;
 var CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var inMessage = require('./node_modules/custom/inMsg.js');
-var googleTranslate = require('google-translate')('');
-var bot_token = process.env.SLACK_BOT_TOKEN || '';
+var creds = require('./creds.js');
+//REQUIRED CONFIGURATIONS//
+//Create a creds.js file and add the following lines (remember to remove comments -//- and fill in the bot token and Google key):
+//var googleTranslateAuth = '';
+//var slack_bot_token = '';
+//exports.googleTranslateAuth = googleTranslateAuth;
+//exports.slack_bot_token = slack_bot_token;
+
+var googleTranslate = require('google-translate')(creds.googleTranslateAuth);
+var bot_token = creds.slack_bot_token;
+var vision = require('@google-cloud/vision')({
+  projectId: 'marco-translate-bot',
+  keyFilename: './keyfile.json'
+});
+//END REQUIRED CONFIGURATIONS//
 
 var rtm = new RtmClient(bot_token);
 
