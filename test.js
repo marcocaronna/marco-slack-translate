@@ -6,28 +6,30 @@ var vision = require('@google-cloud/vision')({
 });
 
 var WebClient = require('@slack/client').WebClient;
-
+var q = require ('q');
 var slack_token = creds.slack_token;
 var web = new WebClient(slack_token);
 
-web.files.sharedPublicURL("F5NTRTFBQ", function shareCb(err, info) {
+function getWebData(url) {
+    var def=q.defer();
+    request.get(url, function(err, response, body) {
+        def.resolve(response.Name1.prop);
+    })
+    return def.promise();
+}
+
+
+web.files.sharedPublicURL("F5PN34Z1V", function shareCb(err, info) {
   if (err) {
     console.log('Error:', err);
   } else {
-	//console.log(info);
-	var request = require('request');
-
-	request(info.file.permalink_public, function (error, response, body) {
-	  //console.log('error:', error); // Print the error if one occurred 
-	  //console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received 
-	  //console.log('body:', body); // Print the HTML for the Google homepage. 
+	  var webData = getWebData(info.file.permalink_public);
 	  var re=new RegExp("<img src=\"https://files.slack.com/files-pri/.*\">");
-	  var result=re.exec(body);
+	  var result=re.exec(webData.body);
 	  imgURL=result[0].substr(result[0].indexOf("\"") + 1);
 	  imgURL=imgURL.substr(0, imgURL.lastIndexOf("\""));
-	});
-  }
-});
+	}
+
 	    vision.detectText(imgURL, function(err, text) {
 		//console.log(err);
 		console.log(text);
@@ -35,6 +37,9 @@ web.files.sharedPublicURL("F5NTRTFBQ", function shareCb(err, info) {
 		//	console.log(text[i]);
 		//}
 	    });
+
+
+  });
 
 
 

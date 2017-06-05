@@ -45,14 +45,52 @@ rtm.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(message) {
   var msg = new inMessage (message);
   if (msg.getMsgType() == "file_share") {
 	  if (msg.getSize() < 4194304) {
-	      imgURL=msg.getURL(slack_token);
-              vision.detectText(imgURL, function(err, text) {
-                //console.log(err);
-                console.log(text);
-                //for (var i=0; i < text.length; i++) {
-                //      console.log(text[i]);
-                //}
-              });
+
+		var WebClient = require('@slack/client').WebClient;
+
+       		var web = new WebClient(slack_token);
+
+        	web.files.sharedPublicURL(msg.getID(), function shareCb(err, info) {
+          		if (err) {
+            			console.log('Error:', err);
+          		} else {
+                		//console.log(info);
+                		var request = require('request');
+
+                		request(info.file.permalink_public, function (error, response, body) {
+                  			//console.log('error:', error); // Print the error if one occurred 
+                  			//console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received 
+                  			//console.log('body:', body); // Print the HTML for the Google homepage. 
+                  			var re=new RegExp("<img src=\"https://files.slack.com/files-pri/.*\">");
+                  			var result=re.exec(body);
+                  			imgURL=result[0].substr(result[0].indexOf("\"") + 1);
+                  			imgURL=imgURL.substr(0, imgURL.lastIndexOf("\""));
+			                vision.detectText(imgURL, function(err, text) {
+					 if (text.length > 0) {
+       				         	//for (var i=0; i < text.length; i++) {
+    				                  //console.log(text[i]);
+       				               //}
+						googleTranslate.detectLanguage(text[0], function(err, detection) {
+      						sl = detection.language;
+      						  if (sl == 'en') {
+						    //rtm.sendMessage("The message is already in English!", msg.getChannel());
+        					    //console.log('Main Process: ' + detection.language);
+      						  } else { 
+						    googleTranslate.translate(text[0], sl, 'en', function(err, translation) {
+	  					    rtm.sendMessage("It means: " + translation.translatedText, msg.getChannel());
+          					    //console.log(translation.translatedText);
+        					    });
+      						  }
+    						});
+
+					 } else {
+						rtm.sendMessage("No text in the image", msg.getChannel());
+					 }
+       				        });
+
+                		});
+          		}
+        	});
           } else {
             rtm.sendMessage("Maximum image size is 4MB", msg.getChannel());
 	  }
